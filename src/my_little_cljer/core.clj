@@ -172,7 +172,7 @@
     ; == is for numbers in clojure
     (and (number? a1) (number? a2)) (== a1 a2)
     ; = is for everything in clojure but given
-    ; that we have made two checks, this
+    ; that we have two checks, this
     ; will function similar to a scheme version
     ; of this function.
     (and (atom? a1) (atom? a2)) (= a1 a2)
@@ -196,3 +196,90 @@
     (empty? lat) '()
     (one? n) at
     :else (cons l (rempick2 (dec n) at))))
+
+(defn rember* [n [head & tail :as l]]
+  "What is l with n removed from it and its S-expressions?"
+  (cond
+    (empty? l) '()
+    (atom? head) 
+    (if (= n head) 
+      (rember* n tail)
+      (cons head (rember* n tail)))
+    :else (cons (rember* n head) (rember* n tail))))
+
+(defn insertR* [new old [head & tail :as l]]
+  "What is l with new inserted to the right of every old?"
+  (cond
+    (empty? l) '()
+    (atom? head) 
+    (if (= old head)
+      (cons head (cons new (insertR* new old tail)))
+      (cons head (insertR* new old tail)))
+    :else (cons (insertR* new old head) (insertR* new old tail))))
+
+(defn occur* [a [head & tail :as l]]
+  "How many times does a occur in l, where l is a list of lists?"
+  (cond
+    (empty? l) 0
+    (atom? head)
+    (if (= a head)
+      (inc (occur* a tail))
+      (occur* a tail))
+    :else (add (occur* a head) (occur* a tail))))
+
+(defn subst* [new old [head & tail :as l]]
+  "What is l when old is replaced by new?"
+  (cond
+    (empty? l) '()
+    (atom? head)
+    (if (= old head)
+      (cons new (subst* new old tail))
+      (cons head (subst* new old tail)))
+    :else (cons (subst* new old head) (subst* new old tail))))
+
+(defn insertL* [new old [head & tail :as l]]
+  "What is l when new is inserted before each old?"
+  (cond
+    (empty? l) '()
+    (atom? head)
+    (if (= old head)
+      (cons new (cons head (insertL* new old tail)))
+      (cons head (insertL* new old tail)))
+    :else (cons (insertL* new old head) (insertL* new old tail))))
+
+(defn member* [a [head & tail :as l]]
+  "Is l a member of a?"
+  (cond
+    (empty? l) false
+    (= a head) true
+    :else
+     (if (coll? head)
+       (or (member* a head) (member* a tail))
+       (member* a tail))))
+
+; this is not a * function because
+; it only recurs on head and not tail.
+(defn leftmost [[head & tail :as l]]
+  "What is the first atom in l?"
+  (cond
+    (empty? l) nil
+    (atom? head) head
+    :else (leftmost head)))
+
+(defn eqlist? [[head1 & tail1 :as l1] [head2 & tail2 :as l2]]
+  "Are the elements in l1 and l2 all the same?"
+  (cond
+    (and (empty? l1) (empty? l2)) true
+    (eqan? head1 head2) (eqlist? tail1 tail2)
+    (or (atom? head1) (atom? head2)) false
+    :else (and
+           (eqlist? head1 head2)
+           (eqlist? tail1 tail2))))
+
+(defn equal? [s1 s2]
+  "Are s1 and s2 equal?"
+  (cond
+    (eqan? s1 s2) true
+    (or (atom? s1) (atom? s2)) false 
+    :else (eqlist? s1 s2)))
+

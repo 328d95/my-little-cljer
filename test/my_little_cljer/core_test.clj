@@ -201,3 +201,134 @@
     (is (= (rempick2 1 '(1 2 3)) '(2 3)))
     (is (= (rempick2 4 '(1 2 3)) '(1 2 3)))
     (is (= (rempick2 1 '()) '()))))
+
+(deftest rember*-test
+  (testing "rember*"
+    (is (= 
+         (rember* 
+          "cup" 
+          '(("coffee") "cup" (("tea") "cup") ("and" ("hick")) "cup")) 
+         '(("coffee") (("tea")) ("and" ("hick")))))
+    (is (= 
+         (rember* 
+          "sauce"
+          '((("tomato" "sauce")) (("bean") "sauce") ("and" (("flying") "sauce")))) 
+         '((("tomato")) (("bean")) ("and" (("flying"))))))))
+
+(deftest insertR*-test
+  (testing "insertR*"
+    (is (=
+         (insertR*
+          "roast"
+          "chuck"
+          '(("how" "much" ("wood"))
+            "could"
+            (("a" ("wood") "chuck"))
+            ((("chuck")))
+            ("if" ("a") (("wood" "chuck")))
+            "could" "chuck" "wood")))
+         '(("how" "much" ("wood"))
+           "could"
+           (("a" ("wood") "chuck" "roast"))
+           ((("chuck" "roast")))
+           ("if" ("a") (("wood" "chuck" "roast")))
+           "could" "chuck" "roast" "wood"))))
+
+(deftest occur*-test
+  (testing "occur*"
+    (is (=
+         (occur* 
+          "banana"
+          '(("banana")
+           ("split" (((("banana" "ice")))
+                     ("cream" ("banana"))
+                     "sherbet"))
+           ("banana")
+           ("bread")
+           ("banana" "brandy")))
+         5))))
+
+(deftest subst*-test
+  (testing "subst*"
+    (is (=
+         (subst* 
+          "orange"
+          "banana"
+          '(("banana")
+             ("split" (((("banana" "ice")))
+                       ("cream" ("banana"))
+                       "sherbet"))
+             ("banana")
+             ("bread")
+             ("banana" "brandy")))
+         '(("orange")
+           ("split" (((("orange" "ice")))
+                     ("cream" ("orange"))
+                     "sherbet"))
+           ("orange")
+           ("bread")
+           ("orange" "brandy"))))))
+
+(deftest insertL*-test
+  (testing "insertL*"
+    (is (=
+         (insertL*
+          "pecker"
+          "chuck"
+          '(("how" "much" ("wood"))
+            "could"
+            (("a" ("wood") "chuck"))
+            ((("chuck")))
+            ("if" ("a") (("wood" "chuck")))
+            "could" "chuck" "wood"))
+         '(("how" "much" ("wood"))
+           "could"
+           (("a" ("wood") "pecker" "chuck"))
+           ((("pecker" "chuck")))
+           ("if" ("a") (("wood" "pecker" "chuck")))
+           "could" "pecker" "chuck" "wood")
+           ))))
+
+(deftest member*-test
+  (testing "member*"
+    (is (=
+         (member*
+          "chips"
+          '(("potato") ("chips" (("with") "fish") ("chips")))
+          )
+         true))))
+
+(deftest leftmost-test
+  (testing "leftmost"
+    (is (= (leftmost '(("potato") ("chips" (("with") "fish") ("chips"))))
+           "potato"))
+    (is (= (leftmost '((("hot") ("tuna" ("and"))) "cheese"))
+           "hot"))
+    (is (= (leftmost '(((() "four")) 17 ("seventeen")))
+           nil))))
+
+(deftest eqlist?-test
+  (testing "eqlist?"
+    (is (= (eqlist? '("strawberry" "ice" "cream")
+                    '("strawberry" "ice" "cream"))
+           true))
+    (is (= (eqlist? '("strawberry" "ice" "cream")
+                    '("strawberry" "cream" "ice"))
+           false))
+    (is (= (eqlist? '("banana" (("split")))
+                    '(("banana") ("split")))
+           false))
+    (is (= (eqlist? '("beef" (("sausage")) ("and" ("soda")))
+                    '("beef" (("salami")) ("and" ("soda"))))
+           false))
+    (is (= (eqlist? '("beef" (("sausage")) ("and" ("soda")))
+                    '("beef" (("sausage")) ("and" ("soda"))))
+           true))))
+
+(deftest equal?-test
+  (testing "equal?"
+    (is (= (equal? '(1 2 3) '(1 2 3)) true))
+    (is (= (equal? '() '()) true))
+    (is (= (equal? '() 1) false))
+    (is (= (equal? 1 1) true))
+    (is (= (equal? 1 2) false))))
