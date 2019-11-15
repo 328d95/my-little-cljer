@@ -283,3 +283,55 @@
     (or (atom? s1) (atom? s2)) false 
     :else (eqlist? s1 s2)))
 
+(defn first-sub-exp [aexp] (nth aexp 2))
+(defn second-sub-exp [aexp] (nth aexp 3))
+
+(defn numbered? [aexp]
+  "Does this arithmetic expression only contain numbers?"
+    (cond
+      (atom? aexp) (number? aexp)
+      :else (and
+       (numbered? (first aexp)) 
+       (numbered? (first-sub-exp aexp)))))
+
+; Recur on the subparts that are of the same nature:
+; - On the sublists of a list.
+; - On the subexpressions of an arithmetic expression. 
+
+(defn value [nexp]
+  "What is the value of the solution of nexp?"
+  (cond
+    (atom? nexp) (if (number? nexp) nexp nil)
+    (= (second nexp) 'add) (add (value (first nexp)) (value (first-sub-exp nexp)))
+    (= (second nexp) 'multi) (multi (value (first nexp)) (value (first-sub-exp nexp)))
+    :else (pow (value (first nexp)) (value (first-sub-exp nexp)))))
+
+; Use help functions to abstract from representations.
+
+; If we represent numbers as: 1 - (()), 2 - ((), ())
+
+(defn sero? [n]
+  "Is n zero?"
+  (empty? n))
+
+(defn edd1 [n]
+  "What is n + 1?"
+  (cons '() n))
+
+(defn zub1 [n]
+  "What is n - 1?"
+  (rest n))
+
+(defn edd [n m]
+  "What is n + m?"
+  (cond
+    (empty? n) m
+    :else (edd (zub1 n) (edd1 m))))
+
+(defn lat? [[ll & ls :as l]]
+  "Does l only contain atoms?"
+  (cond
+    (empty? l) true
+    (coll? ll) false
+    :else (lat? ls)))
+

@@ -332,3 +332,45 @@
     (is (= (equal? '() 1) false))
     (is (= (equal? 1 1) true))
     (is (= (equal? 1 2) false))))
+
+(deftest numbered?-test
+  (testing "numbered?"
+    (is (= (numbered? '(3 add (4 pow 5))) true))
+    (is (= (numbered? 1) true))
+    (is (= (numbered? '(2 multi "sausage")) false))))
+
+(deftest value-test
+  (testing "value"
+    (is (= (value 13) 13))
+    (is (= (value '(1 add 3)) 4))
+    (is (= (value '(1 add (3 pow 4))) 82))
+    (is (= (value "cookie") nil))))
+
+(deftest sero?-test
+  (testing "sero?"
+    (is (= (sero? '(())) false))
+    (is (= (sero? '()) true))))
+
+(deftest edd1-test
+  (testing "edd1"
+    (is (= (edd1 '()) '(())))
+    (is (= (edd1 '(())) '(() ())))))
+
+(deftest zub1-test
+  (testing "zub1"
+    (is (= (zub1 '()) '()))
+    (is (= (zub1 '(())) '()))))
+
+(deftest edd-test
+  (testing "edd"
+    (is (= (edd '() '()) '()))
+    (is (= (edd '() '(())) '(())))
+    (is (= (edd '(()) '(() ())) '(() () ())))))
+
+(deftest lat?-test
+  (testing "lat?"
+    (is (= (lat? '()) true))
+    (is (= (lat? '(())) false))
+    (is (= (lat? '("bacon")) true))
+    (is (= (lat? '(1 2 3 4)) true))
+    (is (= (lat? '([] [] [])) false))))
