@@ -374,3 +374,127 @@
     (is (= (lat? '("bacon")) true))
     (is (= (lat? '(1 2 3 4)) true))
     (is (= (lat? '([] [] [])) false))))
+
+; Chapter 7 - Friends and Relations
+
+(deftest my-set?-test
+  (testing "my-set?"
+    (is (= (my-set? '("apples" "peaches" "pears" "plums")) true))
+    (is (= (my-set? '()) true))))
+
+(deftest member?-test
+  (testing "member?"
+    (is (= (member? 1 '(1)) true))
+    (is (= (member? 1 '()) false))
+    (is (= (member? 1 '(2 3)) false))
+    (is (= (member? 1 '(2 3 1)) true))))
+
+(deftest makeset-test
+  (testing "makeset"
+    (is (= (makeset '("apple" "peach" "pear" "peach" "plum" "apple" "lemon" "peach")) 
+           '("apple" "peach" "pear" "plum" "lemon")))))
+
+(deftest subset?-test
+  (testing "subset?"
+    (is (= (subset? 
+            '(5 "chicken" "wings")
+            '(5 "hamburgers" 2 "pieces" "fried" "chicken" "and" "light" "duckling" "wings"))
+           true))
+    (is (= (subset?
+            '(4 "pounds" "of" "horseradish")
+            '("four" "pounds" "chicken" "and" 5 "ounces" "horseradish"))
+           false))))
+
+(deftest eqset?-test
+  (testing "eqset?"
+    (is (= (eqset?
+            '(6 "large" "chickens" "with" "wings")
+            '(6 "chickens" "with" "large" "wings"))
+           true))))
+
+(deftest intersect?-test
+  (testing "intersect?"
+    (is (= (intersect?
+            '("stewed" "tomatoes" "and" "macaroni")
+            '("macaroni" "and" "cheese"))
+           true))))
+
+(deftest intersect-test
+  (testing "intersect"
+    (is (= (intersect
+            '("stewed" "tomatoes" "and" "macaroni")
+            '("macaroni" "and" "cheese"))
+           '("and" "macaroni")))))
+
+(deftest union-test
+  (testing "union"
+    (is (= (union
+            '("stewed" "tomatoes" "and" "macaroni" "casserole")
+            '("macaroni" "and" "cheese"))
+           '("stewed" "tomatoes" "casserole" "macaroni" "and" "cheese")))))
+
+(deftest intersectall-test
+  (testing "intersectall"
+    (is (= (intersectall
+            '((1 2 3) (3 1 4 5) (5 6 7 8 1 2)))
+           '(1)))
+    (is (= (intersectall
+            '((6 "pears" "and")
+              (3 "peaches" "and" 6 "peppers")
+              (8 "pears" "and" 6 "plums")
+              ("and" 6 "prunes" "with" "some" "apples")))
+           '(6 "and")))))
+
+(deftest a-pair-test
+  (testing "a-pair?"
+    (is (= (a-pair? '("pear" "pear")) true))
+    (is (= (a-pair? '(3 7)) true))
+    (is (= (a-pair? '((2) ("pair"))) true))
+    (is (= (a-pair? '("full" ("house"))) true))))
+
+(deftest build-test
+  (testing "build"
+    (is (= (build 1 2) '(1 2)))
+    (is (= (build 1 '()) '(1 ())))))
+
+(deftest third-test
+  (testing "third"
+    (is (= (third '(1 2 3)) 3))
+    (is (= (third '(1 2 4 5)) 4))))
+
+; (deftest rel-test
+;   (testing "rel?"
+;     (is (= (rel? '("apples" "peaches" "pumpkin" "pie")) 
+;            false))
+;     (is (= (rel? '(("apples" "peaches")
+;                    ("pumpkin" "pie")
+;                    ("apples" "peaches")))
+;            false))
+;     (is (= (rel? '(("apples" "peaches")
+;                    ("pumpkin" "pie")))
+;            true))
+;     (is (= (rel? '((4 3) (4 2) (7 6) (6 2) (3 4)))
+;            true))))
+
+(deftest fun?-test
+  (testing "fun?"
+    (is (= (fun? '((8 3) (4 2) (7 6) (6 2) (3 4))) true))
+    (is (= (fun? '(("d" 4) ("b" 0) ("b" 9) ("e" 5) ("g" 4))) false))))
+
+(deftest revrel-test
+  (testing "revrel"
+    (is (= (revrel '((8 "a") ("pumpkin" "pie") ("got" "sick")))
+           '(("a" 8) ("pie" "pumpkin") ("sick" "got"))))
+    (is (= (revrel '((1 2) (3 4) (5 6)))
+           '((2 1) (4 3) (6 5))))))
+
+(deftest fullfun?-test
+  (testing "fullfun?"
+    (is (= (fullfun? '((8 3) (4 2) (7 6) (6 2) (3 4)))
+           false))
+    (is (= (fullfun? '((8 3) (4 8) (7 6) (6 2) (3 4)))
+           true))
+    (is (= (fullfun? '(("grape" "raisin") ("plum" "prune") ("stewed" "prune")))
+           false))
+    (is (= (fullfun? '(("grape" "raisin") ("plum" "prune") ("stewed" "grape")))
+           true))))

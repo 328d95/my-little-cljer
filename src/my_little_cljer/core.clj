@@ -247,6 +247,13 @@
       (cons head (insertL* new old tail)))
     :else (cons (insertL* new old head) (insertL* new old tail))))
 
+(defn member? [a [head & tail :as l]]
+  "Is l a member of a?"
+  (cond
+    (empty? l) false
+    (= a head) true
+    :else (member? a tail)))
+
 (defn member* [a [head & tail :as l]]
   "Is l a member of a?"
   (cond
@@ -328,10 +335,100 @@
     (empty? n) m
     :else (edd (zub1 n) (edd1 m))))
 
-(defn lat? [[ll & ls :as l]]
+(defn lat? [[l & ls :as ll]]
   "Does l only contain atoms?"
   (cond
-    (empty? l) true
-    (coll? ll) false
+    (empty? ll) true
+    (coll? l) false
     :else (lat? ls)))
 
+; Chapter 7 - Friends and Relations
+
+(defn my-set? [[l & ls :as ll]]
+  "Is ll a set?"
+  (cond 
+    (empty? ll) true
+    (member? l ls) false
+    :else (my-set? ls)))
+
+(defn makeset [[l & ls :as ll]]
+  "Make ll into a set."
+  (cond
+    (empty? ll) '()
+    (my-set? ll) ll
+    :else (cons l (makeset (multirember l ls)))))
+
+(defn subset? [[l & ls :as l1] l2]
+  "Is l1 a subset of l2?"
+  (cond
+    (empty? l1) true
+    (> (count l1) (count l2)) false
+    :else (and (member? l l2) (subset? ls l2))))
+
+(defn eqset? [[s & ss :as set1] set2]
+  "Is set1 equal to set2?"
+    (and
+     (subset? set1 set2)
+     (subset? set2 set1)))
+
+(defn intersect? [[s & ss :as set1] set2]
+  "Is at least one atom in set1 in set2?"
+  (if (empty? set1) false
+    (or (member? s set2) (intersect? ss set2))))
+
+(defn intersect [[s & ss :as set1] set2]
+  "What are the elements of set1 that are also in set2?"
+  (cond
+    (empty? set1) '()
+    (member? s set2) (cons s (intersect ss set2))
+    :else (intersect ss set2)))
+
+(defn union [[s & ss :as set1] set2]
+  "What is the set that contains all of set1 and all of set2?"
+  (cond
+    (empty? set1) set2
+    (member? s set2) (union ss set2)
+    :else (cons s (union ss set2))))
+
+(defn intersectall [[s & ss :as lset]]
+  "What are the common elements in the sets in lset?"
+  (cond
+    (empty? lset) '()
+    (empty? ss) s
+    :else (intersect s (intersectall ss))))
+
+(defn a-pair? [l]
+  "Does l contain two items?"
+  (and (coll? l) (= (count l) 2)))
+
+; (defn first)
+; already exists in clojure
+
+; (defn second)
+; already exists in clojure
+
+(defn build [s1 s2]
+  "Create a list from s1 and s2."
+  (cons s1 (cons s2 '())))
+
+(defn third [[l & ls]]
+  (second ls))
+
+(defn fun? [rel]
+  "Are the first elements of rel a set?"
+  (my-set? (firsts rel)))
+
+(defn revpair [pair]
+  "Reverse the elements in a pair."
+  (build (second pair) (first pair)))
+
+(defn revrel [[l & ls :as rel]]
+  "Reverse the sublists in a list."
+  (cond
+    (empty? rel) '()
+    (coll? l) (cons (revpair l) (revrel ls))
+    :else (cons l (revrel ls))))
+
+(defn fullfun? [rel]
+  "Are the second elements of rel a set?"
+  (my-set? (map second rel)))
