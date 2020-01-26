@@ -498,3 +498,61 @@
            false))
     (is (= (fullfun? '(("grape" "raisin") ("plum" "prune") ("stewed" "grape")))
            true))))
+
+(deftest rember-f-test
+  (testing "rember-f"
+    (is (= ((rember-f =) 5 '(6 2 5 3))
+           '(6 2 3)))
+    (is (= ((rember-f =) "jelly" '("jelly" "beans" "are" "good"))
+           '("beans" "are" "good")))
+    (is (= ((rember-f =) '("pop" "corn") '("lemonade" ("pop" "corn") "and" ("cake")))
+           '("lemonade" "and" ("cake"))))
+    (is (= ((rember-f =) "tuna" '("shrimp" "salad" "and" "tuna" "salad"))
+           '("shrimp" "salad" "and" "salad")))))
+
+(deftest eq?-salad-test
+  (testing "eq?-salad"
+    (is (= (eq?-salad "salad") true))
+    (is (= (eq?-salad "turkey") false))))
+
+(deftest rember-eq?-test
+  (testing "rember-eq?"
+    (is (= (rember-eq? "tuna" '("tuna" "salad" "is" "good"))
+           '("salad" "is" "good")))))
+
+(deftest atom-to-function-test
+  (testing "atom-to-function"
+    (is (= (atom-to-function (first '(add 5 3)))
+           add))))
+
+(deftest multiremberT-tuna-test
+  (testing "multiremberT"
+    (is (= (multiremberT eq-tuna? '("shrimp" "salad" "tuna" "salad" "and" "tuna"))))))
+
+(deftest multirember&co-test
+  (testing "multirember&co"
+    (is (= (multirember&co "tuna" '("and" "tuna") a-friend)
+           false))
+    (is (= (multirember&co "tuna" '("strawberries" "tuna" "and" "swordfish") last-friend)
+           3))))
+
+(deftest multiinsertLR&co-test
+  (testing "multiinsertLR&co"
+    (is (= (multiinsertLR&co "salty" "fish" "chips" 
+                             '("chips" "and" "fish" "or" "fish" "and" "chips")
+                             (fn [newlat L R]
+                               newlat))
+           '("chips" "salty" "and" "salty" "fish" "or" "salty" "fish" "and" "chips" "salty")))))
+
+(deftest evens-only*-test
+  (testing "evens-only*"
+    (is (= (evens-only* '((9 1 2 8) 3 10 ((9 9) 7 6) 2))
+           '((2 8) 10 (() 6) 2)))))
+
+(deftest evens-only*&co-test
+  (testing "evens-only*&co"
+    (is (= (evens-only*&co 
+            '((9 1 2 8) 3 10 ((9 9) 7 6) 2)
+            (fn [newl product sum]
+              (cons sum (cons product newl))))
+           '(38 1920 (2 8) 10 (() 6) 2)))))

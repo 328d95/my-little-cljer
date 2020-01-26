@@ -17,30 +17,6 @@
 
 (defn firsts-clj [l] (map first l))
 
-(defn insertR
-  "Inserts new after old in lat."
-  [new old [l & ls :as lat]]
-  (cond
-    (empty? lat) '()
-    (= old l) (cons l (cons new ls))
-    :else (cons l (insertR new old ls))))
-
-(defn insertL
-  "Inserts new before old in lat."
-  [new old [l & ls :as lat]]
-  (cond
-    (empty? lat) '()
-    (= old l) (cons new lat)
-    :else (cons l (insertL new old ls))))
-
-(defn subst
-  "Replaces the first instance of old with new in lat."
-  [new old [l & ls :as lat]]
-  (cond
-    (empty? lat) '()
-    (= l old) (cons new ls)
-    :else (cons l (subst new old ls))))
-
 (defn subst2
   "What is lat with the first instance of o1 or o2 relaced by new?"
   [new o1 o2 [l & ls :as lat]]
@@ -301,17 +277,6 @@
        (numbered? (first aexp)) 
        (numbered? (first-sub-exp aexp)))))
 
-; Recur on the subparts that are of the same nature:
-; - On the sublists of a list.
-; - On the subexpressions of an arithmetic expression. 
-
-(defn value [nexp]
-  "What is the value of the solution of nexp?"
-  (cond
-    (atom? nexp) (if (number? nexp) nexp nil)
-    (= (second nexp) 'add) (add (value (first nexp)) (value (first-sub-exp nexp)))
-    (= (second nexp) 'multi) (multi (value (first nexp)) (value (first-sub-exp nexp)))
-    :else (pow (value (first nexp)) (value (first-sub-exp nexp)))))
 
 ; Use help functions to abstract from representations.
 
@@ -432,3 +397,195 @@
 (defn fullfun? [rel]
   "Are the second elements of rel a set?"
   (my-set? (map second rel)))
+
+; Chapter 8 - Lambda the Ultimate
+
+(defn rember-f [f]
+  (fn [a [l & ls :as lat]]
+    "Calls (rember a l) using f as the comparator function."
+    (cond
+      (empty? lat) '()
+      (f l a) ls
+      :else (cons l ((rember-f f) a ls)))))
+
+(defn eq?-c [a]
+  (partial = a))
+
+(def eq?-salad (eq?-c "salad"))
+
+(def rember-eq? (rember-f =))
+
+(defn insertL-f [test?]
+  "Inserts new before old in lat given a certain equality test."
+  (fn [new old [l & ls :as lat]]
+    (cond
+      (empty? lat) '()
+      (test? l old) (cons new lat)
+      :else (cons l ((insertL-f test?) new old ls)))))
+
+(defn insertR-f [test?]
+  "Inserts new after old in lat."
+  (fn [new old [l & ls :as lat]]
+    (cond
+      (empty? lat) '()
+      (test? l old) (cons l (cons new ls))
+      :else (cons l ((insertR-f test?) new old ls)))))
+
+(defn seqL [new l ls] )
+
+(defn seqR [new l ls] )
+
+(defn insert-g [cons-order]
+  "Insert new left or right of old."
+  (fn [new old [l & ls :as lat]]
+    (cond 
+      (empty? lat) '()
+      (= l old) (cons-order new l ls)
+      :else (cons l ((insert-g cons-order) new old ls)))))
+
+(def insertL (insert-g (fn [new l ls] (cons new (cons l ls)))))
+
+(def insertR (insert-g (fn [new l ls] (cons l (cons new ls)))))
+
+(def subst (insert-g (fn [new l ls] (cons new ls))))
+
+(defn atom-to-function [x] 
+  (cond 
+    (= x 'add) add
+    (= x 'multi) multi
+    :else pow))
+
+; Recur on the subparts that are of the same nature:
+; - On the sublists of a list.
+; - On the subexpressions of an arithmetic expression. 
+
+(defn value [nexp]
+  "What is the value of the solution of nexp?"
+  (cond
+    (atom? nexp) (if (number? nexp) nexp nil)
+    :else ((atom-to-function (second nexp))
+           (value (first nexp))
+           (value (first-sub-exp nexp)))))
+
+(defn multirember-f [test?]
+  (fn [a lat]
+    (filter (partial (not (test? a))) lat)))
+
+(def multirember-eq (multirember-f =))
+
+(def eq-tuna? (eq?-c "tuna"))
+
+(defn multiremberT [test? lat]
+  (filter #((not (test? %1))) lat))
+
+(defn multirember&co
+  [a [l & ls :as lat] col]
+  (cond
+    (empty? lat) (col '() '())
+    (= l a) (multirember&co a ls (fn [newlat seen]
+                                   (col newlat (cons l seen))))
+    :else (multirember&co a ls (fn [newlat seen]
+                                 (col (cons l newlat) seen)))))
+
+(comment
+  Execution of multirember&co
+
+  1 -
+  tuna
+  (strawb tuna and sword)
+  (n, s) -> (length n)
+
+  2 -
+  tuna
+  (tuna and sword)
+  (n, s) -> (length (cons strawb n))
+
+  3 -
+  tuna
+  (and sword)
+  (n, s) -> (length (cons strawb n))
+  
+  4 - 
+  tuna
+  (sword)
+  (n, s) -> (length (cons and (cons strawb n)))
+
+  5 -
+  tuna
+  ()
+  (n, s) -> (length (cons sword (cons and (cons strawb n))))
+
+  ((), ()) -> 3
+  )
+
+(defn a-friend [x y] (empty? y))
+
+(defn new-friend [newlat seen]
+  (a-friend newlat (cons "tuna" seen)))
+
+(defn last-friend [x y] (length x))
+
+(defn multiinsertL [new old [l & ls :as lat]]
+  (cond
+    (empty? lat) '()
+    (= l old) (cons new (cons old (multiinsertL new old ls)))
+    :else (cons l (multiinsertL new old ls))))
+
+(defn multiinsertR [new old [l & ls :as lat]]
+  (cond
+    (empty? lat) '()
+    (= l old) (cons old (cons new (multiinsertR new old ls)))
+    :else (cons l (multiinsertR new old ls))))
+
+(defn multiinsertLR [new oldL oldR [l & ls :as lat]]
+  (cond 
+    (empty? lat) '()
+    (= l oldL) (cons new (cons oldL (multiinsertLR new oldL oldR ls)))
+    (= l oldR) (cons oldR (cons new (multiinsertLR new oldL oldR ls)))
+    :else (cons l (multiinsertLR new oldL oldR ls))))
+
+(defn multiinsertLR&co [new oldL oldR [l & ls :as lat] col]
+  (cond
+    (empty? lat) (col '() 0 0)
+    (= l oldL) 
+    (multiinsertLR&co new oldL oldR ls
+                      (fn [newlat lIns rIns]
+                        (col (cons new (cons oldL newlat)) (inc lIns) rIns)))
+    (= l oldR) 
+    (multiinsertLR&co new oldL oldR ls
+                      (fn [newlat lIns rIns]
+                        (col (cons oldR (cons new newlat)) lIns (inc rIns))))
+    :else
+    (multiinsertLR&co new oldL oldR ls
+                      (fn [newlat lIns rIns]
+                        (col (cons l newlat) lIns rIns)))))
+
+(defn evens-only* [[l & ls :as lat]]
+  "Removes all odd numbers from a list of nested lists."
+  (cond
+    (empty? lat) '()
+    (coll? l) (cons (evens-only* l) (evens-only* ls))
+    (even? l) (cons l (evens-only* ls))
+    :else (evens-only* ls)))
+
+(defn evens-only*&co [[l & ls :as lat] col]
+  "Collects the even numbers, their sum and their product then runs col on the result."
+  (cond
+    (empty? lat) 
+    (col '() 1 0)
+    (coll? l) 
+    (evens-only*&co 
+     l
+     (fn [al ap as]
+       (evens-only*&co ls
+                       (fn [dl dp ds]
+                         (col (cons al dl)
+                              (* ap dp)
+                              (+ as ds))))))
+    (even? l)
+    (evens-only*&co ls (fn [newl p s]
+                         (col (cons l newl)
+                              (* l p) s)))
+    :else
+    (evens-only*&co ls (fn [newl p s]
+                         (col newl p (+ l s))))))
