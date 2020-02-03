@@ -589,3 +589,291 @@
     :else
     (evens-only*&co ls (fn [newl p s]
                          (col newl p (+ l s))))))
+
+(defn keep-looking [a next lat]
+  (cond
+    (number? next) (keep-looking a (nth lat (- next 1)) lat)
+    :else (= a next)))
+
+(defn looking [a lat]
+  "Search for a using l as the next index to search, starting with 1."
+  (keep-looking a (first lat) lat))
+
+(comment 
+  keep-looking is called a partial function because it does not recur on a part of lat.
+  
+  If the list that is passed to keep-looking contains only numbers then keep-looking will not complete.
+
+  functions that recur on the lists passed to them are called total functions.)
+
+(defn eternity
+  "This function is an infinite recursion and therefore the most partial function possible."
+  [x]
+  (eternity x))
+
+(defn shift 
+  "Takes a pair whose first component is a pair and builds a pair by shifting the second part of the first component into the second component."
+  [x]
+  (build (first (first x))
+         (build (second (first x))
+                (second x))))
+
+(defn align [pora]
+  (cond 
+    (not (coll? pora)) pora
+    (a-pair? (first pora)) (align (shift pora))
+    :else (build (first pora)
+                 (align (second pora)))))
+
+(defn length* [pora]
+  (cond
+    (not (coll? pora)) 1
+    :else (+ (length* (first pora))
+             (length* (second pora)))))
+
+(defn weight* [pora]
+  (cond
+    (atom? pora) 1
+    :else (+ (* (weight* (first pora)) 2)
+             (weight* (second pora)))))
+
+; This function is not total because if you pass a pair of pairs, it fails to complete.
+(defn my-shuffle [pora]
+  (cond
+    (not (coll? pora)) pora
+    (a-pair? (first pora)) (my-shuffle (revpair pora))
+    :else (build (first pora)
+                 (my-shuffle (second pora)))))
+
+
+; Is this function total?
+; It doesn't yield a value for 0, but otherwise
+; nobody knows. Thank you, Lothar Collatz (1910 - 1990)
+(defn C [n]
+  (cond
+    (= 1 n) 1
+    :else (if (even? n)
+            (C (/ n 2))
+            (C (inc (* 3 n))))))
+
+(defn A [n m]
+  (cond
+    (= 0 n) (inc m)
+    (= 0 m) (A (dec n) 1)
+    :else (A (dec n)
+             (A n (dec m)))))
+
+(comment
+  (defn will-stop? [f] ...)
+  It is impossible to define will-stop? as if we call it on 
+  
+  (defn last-try [x]
+    (and (will-stop? last-try)
+         (eternity x)))
+
+  the value of will-stop? is undefined.
+
+  We took a really close look at the two possible cases. If we can define will-stop?, then
+  (will-stop? last-try)
+  must yield either true or false. But it cannot--due to the very definition of what will-stop? is supposed todo. This must mean that will-stop cannot be defined.
+  
+  This is the only function with this property.)
+
+(def length1or0 ((fn [mk-length]
+                  (mk-length mk-length))
+                (fn [mk-length]
+                  (fn [l]
+                    (cond
+                      (empty? l) 0
+                      :else (inc
+                             ((mk-length eternity)
+                              (rest l))))))))
+
+(def mk-length ((fn [mk-length]
+                   (mk-length mk-length))
+                 (fn [mk-length]
+                   (fn [l]
+                     (cond
+                       (empty? l) 0
+                       :else (inc
+                              ((mk-length mk-length)
+                               (rest l))))))))
+
+(def applicator (fn [x]
+                  ((applicator applicator) x)))
+
+
+(defn fib
+  ([n] (fib n 0 1))
+  ([n a b]
+   (cond
+     (= n 1) a
+     (= n 2) b
+     :else (fib (dec n) b (+ a b)))))
+
+
+(def almost-factorial
+  (fn [f]
+    (fn [n]
+      (cond
+        (= n 0) 1
+        :else (* n (f (- n 1)))))))
+
+; normal order Y combinator
+; this doesn't work in clojure as it
+; has strict execution
+(def lazy-Y-combinator
+  (fn [f]
+    ((fn [x] (x x))
+     (fn [x]
+       (f (x x))))))
+
+; this is equivalent to the lazy-Y-combinator
+(def normal-order-Y-combinator
+  (fn [f]
+    ((fn [x] (f (x x))) (fn [x] (f (x x))))))
+
+
+(defn part-factorial [self]
+  (let [f (fn [y] ((self self) y))]
+    (fn [n]
+      (if (= n 0)
+        1
+        (* n (f (- n 1)))))))
+
+
+; applicative-order Y combinator
+(def Y (fn [non-recursive-fn]
+         ; apply x to x
+          ; where x is the non-recursive-fn 
+          ; wrapped in a lambda which accepts
+          ; a function which it wraps in a lambda
+          ; and passes to itself.
+          ((fn [x] (x x))
+           (fn [f]
+             (non-recursive-fn (fn [y] ((f f) y)))))))
+
+(def Y-equivalent
+  (fn [f]
+    ((fn [x] (f (fn [y] ((x x) y))))
+     (fn [x] (f (fn [y] ((x x) y)))))))
+
+(def new-entry build)
+
+(defn lookup-in-entry-clj [name entry entry-f]
+  (nth (second entry) 
+       (.indexOf (first entry) name) 
+       (entry-f name)))
+
+(defn lookup-in-entry-help
+  [name [na & nas :as names] [va & vas] entry-f]
+  (cond
+    (empty? names) (entry-f name)
+    (= name na) va
+    :else (lookup-in-entry-help name nas vas entry-f)))
+
+(defn lookup-in-entry [name entry entry-f]
+  (lookup-in-entry-help name
+                        (first entry)
+                        (second entry)
+                        entry-f))
+
+(def extend-table cons)
+
+(defn lookup-in-table [name [t & ts :as table] table-f]
+  (cond
+    (empty? table) (table-f name)
+    :else (lookup-in-entry 
+           name 
+           t
+           (fn [name]
+             (lookup-in-table name ts table-f)))))
+
+(defn *const [e table]
+  (cond
+    (number? e) e
+    (= e true) true
+    (= e false) false
+    :else (build (quote primitive) e)))
+
+(def text-of second)
+
+(defn *quote [e table]
+  (text-of e))
+
+(defn initial-table [name]
+  (first (quote ())))
+
+(defn *identifier [e table]
+  (lookup-in-table e table initial-table))
+
+(defn *fn [e table]
+  (build (quote non-primitive)
+         (cons table (rest e))))
+
+(def table-of first)
+(def formals-of second)
+(def body-of third)
+
+(defn else? [x]
+  (cond
+    (atom? x) (= x (quote else))
+    :else false))
+
+(def question-of first)
+(def answer-of second)
+
+(defn evcon [[l & ls] table]
+  (cond
+    (else? (question-of l)) (meaning (answer-of l) table)
+    (meaning (question-of l) table) (meaning (answer-of l) table)
+    :else (evcon ls table)))
+
+(def cond-lines-of rest)
+
+(defn *cond [e table]
+  (evcon (cond-lines-of e) table))
+
+(defn atom-to-action [e]
+  (cond
+    (number? e) *const
+    (= e true) *const
+    (= e false) *const
+    (= e 'cons) *const
+    (= e 'first) *const
+    (= e 'rest) *const
+    (= e 'empty?) *const
+    (= e '=) *const
+    (= e 'atom?) *const
+    (= e 'zero?) *const
+    (= e 'add1) *const
+    (= e 'sub1) *const
+    (= e 'number?) *const
+    :else *identifier))
+
+(defn list-to-action [[e]]
+  (cond
+    (atom? e)
+    (cond
+      (= e (quote quote)) *quote
+      (= e 'fn) *fn
+      (= e 'cond) *cond
+      :else *application)
+    :else *application))
+
+(defn expression-to-action [e]
+  (cond
+    (atom? e) (atom-to-action e)
+    :else (list-to-action e)))
+
+(defn meaning [e table]
+  ((expression-to-action e) e table))
+
+(defn value [e]
+  (meaning e '()))
+
+(comment the code from my little schemer doesn't work in
+         clojure because the compiler runs down the filter
+         and checks that each reference can be found before
+         it is used. the meaning, expression-to-action, list-to-action
+         functions are co-dependent.)

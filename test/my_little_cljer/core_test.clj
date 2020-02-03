@@ -556,3 +556,72 @@
             (fn [newl product sum]
               (cons sum (cons product newl))))
            '(38 1920 (2 8) 10 (() 6) 2)))))
+
+(deftest looking-test
+  (testing "looking"
+    (is (= (looking "caviar" '(6 2 4 "caviar" 5 7 3))
+           true))
+    (is (= (looking "caviar" '(6 2 "grits" "caviar" 5 7 3))
+           false))))
+
+(deftest shift-test
+  (testing "shift"
+    (is (= (shift '((:a :b) :c))
+           '(:a (:b :c))))
+    (is (= (shift '((:a :b) (:c :d)))
+           '(:a (:b (:c :d)))))))
+
+(deftest weight*-test
+  (testing "weight*"
+    (is (= (weight* '((:a :b) :c))
+           7))
+    (is (= (weight* '(:a (:b :c)))
+           5))))
+
+(deftest shuffle-test
+  (testing "my-shuffle"
+    (is (= (my-shuffle '(:a (:b :c)))
+           '(:a (:b :c))))
+    (is (= (my-shuffle '(:a :b)) '(:a :b)))))
+
+(deftest add-test
+  (testing "A"
+    (is (= (A 1 0) 2))
+    (is (= (A 1 1) 3))
+    (is (= (A 2 2) 7))))
+
+(deftest length1or0-test
+  (testing "length1or0"
+    (is (= (length1or0 '(1)) 1))
+    (is (= (length1or0 '()) 0))))
+
+(deftest mk-length-test
+  (testing "mk-length"
+    (is (= (mk-length '(:apple)) 1))
+    (is (= (mk-length '(1 2)) 2))))
+
+(deftest lookup-in-entry-test
+  (testing "lookup-in-entry"
+    (is (= (lookup-in-entry :entree 
+                            '((:appetizer :entree :beverage)
+                              (:food :tastes :good))
+                            (fn [x] x))
+           :tastes))))
+
+(deftest lookup-in-table-test
+  (testing "lookup-in-table"
+    (is (= (lookup-in-table
+            :entree
+            '(((:entree :dessert)
+               (:spaghetti :spumoni))
+              ((:appetizer :entree :beverage)
+               (:food :tastes :good)))
+            (fn [x] x)))
+        :spaghetti)))
+
+(deftest *cond-test
+  (testing "*cond"
+    (is (= (*cond 
+            '(cond ('coffee 'klatsch) ('else 'party))
+            '((('coffee) (true))
+              ('klatsch 'party) (5 (6))))))))
